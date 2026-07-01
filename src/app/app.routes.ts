@@ -7,10 +7,10 @@ export const routes: Routes = [
     {
         path: '',
         pathMatch: 'full',
-        redirectTo: '/products'
+        redirectTo: '/products/all'
     },
     {
-        path: 'products',
+        path: 'products/:category',
         // component: ProductGrid //usual way
         loadComponent: () => import('./pages/product-grid/product-grid') // implementing lazy loading
     },
