@@ -1,15 +1,17 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { Product } from '../../models/products';
 import { CurrencyPipe } from '@angular/common';
-import { MatAnchor } from "@angular/material/button";
+import { MatAnchor, MatIconButton } from "@angular/material/button";
 import { MatIcon } from "@angular/material/icon";
+import { EcommerceStore } from '../../e-commerece.store';
 
 @Component({
   selector: 'app-product-card',
-  imports: [CurrencyPipe, MatAnchor, MatIcon],
+  imports: [CurrencyPipe, MatAnchor, MatIcon, MatIconButton],
   template: `
-   <div class="bg-white cursor-pointer rounded-xl shadow-lg overflow-hidden flex flex-col h-full">
+   <div class="relative bg-white cursor-pointer rounded-xl shadow-lg overflow-hidden flex flex-col h-full">
         <img [src]="prod().imageUrl" class="w-full h-[300px] object-cover rounded-t-xl" />
+      <ng-content/>
         <div class="p-5 flex flex-col flex-1">
           <h3 class="text-lg font-semibold text-gray-900 mb-2 leading-tight">
             {{prod().name}}
@@ -36,4 +38,16 @@ export class ProductCard {
   prod = input.required<Product>();
 
   onCartClick = output<Product>();
+
+  store = inject(EcommerceStore);
+
+  isInwishlist = computed(()=>this.store.wishlistItems().find(p => p.id === this.prod().id));
+
+  toggleWishlist(product : Product){
+    if(this.isInwishlist()){
+      this.store.removeFromwishlist(product);
+    } else {
+      this.store.addToWishlist(product);
+    }
+  }
 }

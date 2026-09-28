@@ -1,10 +1,13 @@
-import { computed } from "@angular/core";
+import { computed, inject } from "@angular/core";
 import  { Product } from "./models/products";
 import { patchState, signalMethod, signalStore, withComputed, withMethods, withState } from "@ngrx/signals";
+import { produce } from "immer";
+import { Toaster } from "./services/toaster";
 
 export type EcommerceState = {
     products : Product[];
-    category : string
+    category : string;
+    wishlistItems : Product[]
 }
 
 export const EcommerceStore = signalStore(
@@ -238,8 +241,9 @@ export const EcommerceStore = signalStore(
       category: 'Electronics'
     }
   ],
-  category : 'all'
-    }),
+  category : 'all',
+  wishlistItems : []
+    } as EcommerceState),
     withComputed(({category, products}) =>({
         filteredProducts: computed(()=>{
               if (category() === 'all') {
@@ -250,11 +254,31 @@ export const EcommerceStore = signalStore(
     return products().filter(
       (p) => p.category.toLowerCase() === category()
     );
-        })
+        }),
+       // wishlistCount : computed(()=> wishlistItems.length)
     })),
-    withMethods((store) => ({
+    withMethods((store, toaster = inject(Toaster)) => ({
       setCategory: signalMethod<string>((category: string) => {
         patchState(store, {category})
-      })
+      }),
+      addToWishlist :(product : Product) => {
+        const updatedWishlistItems = produce(store.wishlistItems(), (draft)=>{
+          if(!draft.find((p) => p.id === product.id)){
+            draft.push(product);
+          }
+        });
+        patchState(store, { wishlistItems : updatedWishlistItems});
+        toaster.success("Product added to the wishlist!");
+      },
+      removeFromwishlist: (product : Product) => {
+        patchState(store,{
+          wishlistItems :store.wishlistItems().filter(p => p.id !== product.id),});
+           toaster.success("Product removed from the wishlist!");
+      },
+
+      clearWishlist: () => {
+        patchState(store, { wishlistItems : []});
+      }
+     
     }))
 )
